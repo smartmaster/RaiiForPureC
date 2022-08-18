@@ -15,20 +15,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="zzz-main.cpp">
+    <ClCompile Include="zzz-main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TestAllocator.cpp">
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="xRegContext.asm">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TestMulSort.cpp">
+    </MASM>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="sRegContext.h">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TestCounter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="testsjlj.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    </ClInclude>
   </ItemGroup>
 </Project>

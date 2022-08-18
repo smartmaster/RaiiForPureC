@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{97cdce70-0193-41a8-8f0d-54dbce5ad913}</ProjectGuid>
-    <RootNamespace>TestCppMisc</RootNamespace>
+    <ProjectGuid>{34d7bfcb-2774-4121-89ca-5f935c7028f6}</ProjectGuid>
+    <RootNamespace>DummyForDebug</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -104,8 +104,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,11 +127,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="TestAllocator.cpp" />
-    <ClCompile Include="TestCounter.cpp" />
-    <ClCompile Include="TestMulSort.cpp" />
-    <ClCompile Include="testsjlj.cpp" />
-    <ClCompile Include="zzz-main.cpp" />
+    <ClCompile Include="DummyForDebug.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
 </Project>

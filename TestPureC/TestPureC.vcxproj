@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{97cdce70-0193-41a8-8f0d-54dbce5ad913}</ProjectGuid>
-    <RootNamespace>TestCppMisc</RootNamespace>
+    <ProjectGuid>{e48f4836-5dcc-4afc-bb58-9c875d34e2e4}</ProjectGuid>
+    <RootNamespace>TestPureC</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -54,6 +54,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -104,8 +105,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,11 +128,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="TestAllocator.cpp" />
-    <ClCompile Include="TestCounter.cpp" />
-    <ClCompile Include="TestMulSort.cpp" />
-    <ClCompile Include="testsjlj.cpp" />
-    <ClCompile Include="zzz-main.cpp" />
+    <MASM Include="xRegContext.asm">
+      <FileType>Document</FileType>
+    </MASM>
+    <ClCompile Include="zzz-main.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="sRegContext.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  </ImportGroup>
 </Project>
