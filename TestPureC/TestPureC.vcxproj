@@ -132,6 +132,7 @@
       <FileType>Document</FileType>
     </MASM>
     <ClCompile Include="test-save-restore-ctx-macro.c" />
+    <ClCompile Include="test-save-restore-ctx-macro1.c" />
     <ClCompile Include="test-save-restore-ctx.c" />
     <ClCompile Include="zzz-main.c" />
   </ItemGroup>

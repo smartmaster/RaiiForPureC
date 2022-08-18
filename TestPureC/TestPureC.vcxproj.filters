@@ -24,6 +24,9 @@
     <ClCompile Include="test-save-restore-ctx-macro.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test-save-restore-ctx-macro1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="xRegContext.asm">
