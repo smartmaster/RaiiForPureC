@@ -18,6 +18,12 @@
     <ClCompile Include="zzz-main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test-save-restore-ctx.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test-save-restore-ctx-macro.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="xRegContext.asm">
@@ -25,7 +31,10 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="sRegContext.h">
+    <ClInclude Include="tRegContext.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xPureCRAII.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

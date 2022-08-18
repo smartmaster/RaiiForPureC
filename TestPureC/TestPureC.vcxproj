@@ -131,10 +131,13 @@
     <MASM Include="xRegContext.asm">
       <FileType>Document</FileType>
     </MASM>
+    <ClCompile Include="test-save-restore-ctx-macro.c" />
+    <ClCompile Include="test-save-restore-ctx.c" />
     <ClCompile Include="zzz-main.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="sRegContext.h" />
+    <ClInclude Include="tRegContext.h" />
+    <ClInclude Include="xPureCRAII.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
