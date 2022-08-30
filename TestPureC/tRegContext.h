@@ -38,4 +38,5 @@ typedef struct tRegContext
 		unsigned long long xmm13_offset[2];//	equ	368
 		unsigned long long xmm14_offset[2];//	equ	384
 		unsigned long long xmm15_offset[2];//	equ	400
+		struct tRegContext* prev;
 }tRegContext;

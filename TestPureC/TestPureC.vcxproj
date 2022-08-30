@@ -131,6 +131,7 @@
     <MASM Include="xRegContext.asm">
       <FileType>Document</FileType>
     </MASM>
+    <ClCompile Include="test-save-restore-ctx-malloc.c" />
     <ClCompile Include="test-save-restore-ctx-macro.c" />
     <ClCompile Include="test-save-restore-ctx-macro1.c" />
     <ClCompile Include="test-save-restore-ctx.c" />

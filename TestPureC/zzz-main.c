@@ -1,7 +1,7 @@
 
 extern void testsjljMac();
 extern void testsjlj();
-
+extern void testsjlj_malloc();
 
 int main(int argc, char** argv)
 {
@@ -22,6 +22,7 @@ int main(int argc, char** argv)
 
 	case 0:
 	{
+		testsjlj_malloc();
 		testsjljMac1();
 		testsjljMac();
 		testsjlj();
