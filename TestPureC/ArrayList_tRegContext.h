@@ -9,3 +9,4 @@ extern void Delete_ArrayList_tRegContext(ArrayList_tRegContext* al);
 
 extern tRegContext* ArrayList_tRegContext_Append(ArrayList_tRegContext* self);
 extern tRegContext* ArrayList_tRegContext_Prev(ArrayList_tRegContext* self);
+extern tRegContext* ArrayList_tRegContext_Next(ArrayList_tRegContext* self);

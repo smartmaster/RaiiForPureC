@@ -3,14 +3,15 @@
 #include <malloc.h>
 #include <assert.h>
 
-#define INITIAL_COUNT 2
+#define INITIAL_COUNT 8
 
 
 typedef struct ArrayList_tRegContext
 {
 	tRegContext _preallocated[INITIAL_COUNT];
 	tRegContext* _last;
-	tRegContext* _prev;
+	tRegContext* _prevCursor;
+	tRegContext* _nextCursor;
 	int _count;
 	int _dummy;
 }ArrayList_tRegContext;
@@ -19,7 +20,8 @@ typedef struct ArrayList_tRegContext
 void ArrayList_tRegContext_ctor(ArrayList_tRegContext* self)
 {
 	self->_last = NULL;
-	self->_prev = NULL;
+	self->_prevCursor = NULL;
+	self->_nextCursor = NULL;
 	self->_count = 0;
 	self->_dummy = 'FACE';
 }
@@ -75,13 +77,28 @@ tRegContext* ArrayList_tRegContext_Append(ArrayList_tRegContext* self)
 tRegContext* ArrayList_tRegContext_Prev(ArrayList_tRegContext* self)
 {
 
-	if (self->_prev == NULL)
+	if (self->_prevCursor == NULL)
 	{
-		self->_prev = self->_last;
+		self->_prevCursor = self->_last;
 	}
 
-	tRegContext* node = self->_prev;
-	self->_prev = self->_prev->prev;
+	tRegContext* node = self->_prevCursor;
+	self->_prevCursor = self->_prevCursor->prev;
+	return node;
+}
+
+
+//reviewed 
+//but not tested TODO...
+tRegContext* ArrayList_tRegContext_Next(ArrayList_tRegContext* self)
+{
+	if (self->_nextCursor == NULL)
+	{
+		self->_nextCursor = &self->_preallocated[0];
+	}
+
+	tRegContext* node = self->_nextCursor;
+	self->_nextCursor = self->_nextCursor->next;
 	return node;
 }
 
