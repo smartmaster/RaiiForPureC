@@ -2,55 +2,43 @@
 
 #include <assert.h>
 #include "tRegContext.h"
+#include "ArrayList_tRegContext.h"
 
 extern unsigned long long xSaveRegCtx(volatile void* bufferRcx, unsigned long long dummyRdx, unsigned long long dummyR8, unsigned long long dummyR9);
 extern unsigned long long xRestoreRegCtx(volatile void* bufferRcx, unsigned long long dummyRdx, unsigned long long dummyR8, unsigned long long dummyR9);
 
 
 ////////////////////////////////////////////////
-#define SML_RAII_SCOPE_BEGIN(jb, N) \
-volatile tRegContext jb[N]; \
-volatile int jb ## _index = -1; \
-volatile int jb ## _final_index = -1;
+#define SML_RAII_SCOPE_BEGIN(jmp) \
+ArrayList_tRegContext* volatile jmp ## AL = New_ArrayList_tRegContext(); \
+tRegContext* jmp ## Final = ArrayList_tRegContext_Append(jmp ## AL);
 
 ////////////////////////////////////////////////
-#define SML_RAII_BEGIN(jb) \
-++jb ## _index; \
-if (xSaveRegCtx(&jb[jb ## _index], 0xd, 8, 9)) \
+#define SML_RAII_BEGIN(jmp) \
+if (xSaveRegCtx(ArrayList_tRegContext_Append(jmp ## AL), 0xd, 8, 9)) \
 {
 
 
 ////////////////////////////////////////////////
-#define SML_RAII_END(jb) \
-	--jb ## _index;  \
-	if (0 == jb ## _index) \
-	{ \
-		jb ## _index = jb ## _final_index; \
-	} \
-	xRestoreRegCtx(&jb[jb ## _index], 0xd, 8, 9); \
+#define SML_RAII_END(jmp) \
+	xRestoreRegCtx(ArrayList_tRegContext_Prev(jmp ## AL), 0xd, 8, 9); \
 }
 
 ////////////////////////////////////////////////
-#define SML_RAII(jb, stmt) \
-SML_RAII_BEGIN(jb); \
+#define SML_RAII(jmp, stmt) \
+SML_RAII_BEGIN(jmp); \
 stmt; \
-SML_RAII_END(jb);
+SML_RAII_END(jmp);
 
 ////////////////////////////////////////////////
-#define SML_RAII_SCOPE_END(jb, N) \
-++jb ## _index; \
-jb ## _final_index = jb ## _index; \
-assert(_countof(jb) > jb ## _final_index); \
-if (xSaveRegCtx(&jb[jb ## _index], 0xd, 8, 9)) \
+#define SML_RAII_SCOPE_END(jmp) \
+if (xSaveRegCtx(jmp ## Final, 0xd, 8, 9)) \
 { \
+	Delete_ArrayList_tRegContext(jmp ## AL); \
+	jmp ## AL = NULL; \
 	assert(1); \
 } \
 else \
 { \
-	--jb ## _index; \
-	if (0 == jb ## _index) \
-	{ \
-		jb ## _index = jb ## _final_index; \
-	} \
-	xRestoreRegCtx(&jb[jb ## _index], 0xd, 8, 9); \
+	xRestoreRegCtx(ArrayList_tRegContext_Prev(jmp ## AL), 0xd, 8, 9); \
 }

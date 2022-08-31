@@ -10,7 +10,7 @@ void testsjljMac1()
 {
 	
 
-	SML_RAII_SCOPE_BEGIN(regctx, 10);
+	SML_RAII_SCOPE_BEGIN(regctx);
 
 	 const char* volatile str0 = _strdup("0000");
 	SML_RAII(regctx, {
@@ -48,7 +48,7 @@ void testsjljMac1()
 
 
 
-	SML_RAII_SCOPE_END(regctx, 10);
+	SML_RAII_SCOPE_END(regctx);
 
 
 	return;

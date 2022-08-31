@@ -8,7 +8,7 @@ void testsjljMac()
 {
 	volatile int ii = 0;
 
-	SML_RAII_SCOPE_BEGIN(regctx, 10);
+	SML_RAII_SCOPE_BEGIN(regctx);
 
 	SML_RAII_BEGIN(regctx);
 	--ii;
@@ -57,7 +57,7 @@ void testsjljMac()
 
 
 
-	SML_RAII_SCOPE_END(regctx, 10);
+	SML_RAII_SCOPE_END(regctx);
 
 	printf("end %d" "\r\n", ii);
 }

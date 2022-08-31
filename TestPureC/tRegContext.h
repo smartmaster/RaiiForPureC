@@ -38,5 +38,6 @@ typedef struct tRegContext
 		unsigned long long xmm13_offset[2];//	equ	368
 		unsigned long long xmm14_offset[2];//	equ	384
 		unsigned long long xmm15_offset[2];//	equ	400
-		struct tRegContext* prev;
+		struct tRegContext* next;			//416
+		struct tRegContext* prev;			//424 for allignment at 16
 }tRegContext;
