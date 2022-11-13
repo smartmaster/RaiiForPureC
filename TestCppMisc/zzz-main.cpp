@@ -5,6 +5,7 @@ extern void CaseTestAlloc();
 extern void TestSort();
 extern void printCounter();
 extern void testsjlj();
+extern void TestExpr();
 
 int main(int argc, char** argv)
 {
@@ -18,6 +19,11 @@ int main(int argc, char** argv)
 
 	switch (testCase)
 	{
+	case 4:
+	{
+		TestExpr();
+	}
+	break;
 	case 3:
 	{
 		testsjlj();

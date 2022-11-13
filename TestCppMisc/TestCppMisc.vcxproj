@@ -129,6 +129,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ExprTree.cpp" />
     <ClCompile Include="TestAllocator.cpp" />
     <ClCompile Include="TestCounter.cpp" />
     <ClCompile Include="TestMulSort.cpp" />
