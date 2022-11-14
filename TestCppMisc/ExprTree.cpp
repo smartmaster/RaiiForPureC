@@ -2,7 +2,12 @@
 #include <cassert>
 #include <memory>
 #include <vector>
+#include <stack>
+#include <string>
+#include <set>
 #include <iostream>
+#include <fstream>
+#include <random>
 
 namespace SmartLib
 {
@@ -13,7 +18,7 @@ namespace SmartLib
 	public:
 		virtual ~Expression() {};
 		virtual T Evaluate() const = 0;
-		virtual void Print(int spaceCount) const = 0;
+		virtual void Print(int spaceCount, std::ostream& out) const = 0;
 	};
 
 	template<typename T>
@@ -39,13 +44,13 @@ namespace SmartLib
 			return _number;
 		}
 
-		virtual void Print(int spaceCount) const override
+		virtual void Print(int spaceCount, std::ostream& out) const override
 		{
-			for (int ii = 0; ii < spaceCount; ++ ii)
+			for (int ii = 0; ii < spaceCount; ++ii)
 			{
-				std::cout << '\t';
+				out << '\t';
 			}
-			std::cout << _number << std::endl;
+			out << _number << std::endl;
 		}
 	};
 
@@ -112,6 +117,11 @@ namespace SmartLib
 				{
 					result = leftVal % rightVal;
 				}
+				else if constexpr (std::is_floating_point_v<T>)
+				{
+					long long times = (long long)(leftVal / rightVal);
+					result = leftVal - times * rightVal;
+				}
 				break;
 			default:
 				assert(false);
@@ -121,16 +131,16 @@ namespace SmartLib
 			return result;
 		}
 
-		virtual void Print(int spaceCount) const override
+		virtual void Print(int spaceCount, std::ostream& out) const override
 		{
 			for (int ii = 0; ii < spaceCount; ++ii)
 			{
-				std::cout << '\t';
+				out << '\t';
 			}
-			std::cout << (char)(_op) << std::endl;
+			out << (char)(_op) << std::endl;
 
-			_left->Print(spaceCount + 1);
-			_right->Print(spaceCount + 1);
+			_left->Print(spaceCount + 1, out);
+			_right->Print(spaceCount + 1, out);
 		}
 	};
 
@@ -163,25 +173,25 @@ namespace SmartLib
 	template<typename T>
 	class ExpressionBuilder
 	{
-		std::vector<upExpr<T>> _exprStack;
-		std::vector<OPERATOR> _opStack;
+		std::stack<upExpr<T>> _exprStack;
+		std::stack<OPERATOR> _opStack;
 
 	private:
 		void MakeExpressionBinary()
 		{
 			//expr1 op expr2 --> exprNew
-			OPERATOR topOp = _opStack.back();
-			_opStack.pop_back();
+			OPERATOR topOp = _opStack.top();
+			_opStack.pop();
 
-			upExpr<T> expr2 = std::move(_exprStack.back());
-			_exprStack.pop_back();
+			upExpr<T> expr2 = std::move(_exprStack.top());
+			_exprStack.pop();
 
-			upExpr<T> expr1 = std::move(_exprStack.back());
-			_exprStack.pop_back();
+			upExpr<T> expr1 = std::move(_exprStack.top());
+			_exprStack.pop();
 
 			auto exprNew = std::make_unique<ExpressionBinary<T>>(topOp, std::move(expr1), std::move(expr2));
 
-			_exprStack.push_back(std::move(exprNew));
+			_exprStack.push(std::move(exprNew));
 
 		}
 
@@ -237,7 +247,7 @@ namespace SmartLib
 				{
 				case TokenType::TT_NUM:
 				{
-					_exprStack.push_back(std::make_unique<ExpressionNumber<T>>(tok._number));
+					_exprStack.push(std::make_unique<ExpressionNumber<T>>(tok._number));
 				}
 				break;
 
@@ -247,7 +257,7 @@ namespace SmartLib
 					{
 					case OPERATOR::LEFT_BRACKET:
 					{
-						_opStack.push_back(OPERATOR::LEFT_BRACKET);
+						_opStack.push(OPERATOR::LEFT_BRACKET);
 					}
 					break;
 
@@ -256,11 +266,15 @@ namespace SmartLib
 						//(expr1   )
 						//(expr1 - expr2   )
 						//(expr1 - expr2 / expr3  )
-						while (OPERATOR::LEFT_BRACKET != _opStack.back())
+						int loopCount = 0;
+						while (OPERATOR::LEFT_BRACKET != _opStack.top())
 						{
 							MakeExpressionBinary();
+							++loopCount;
 						}
-						_opStack.pop_back();
+						assert(loopCount <= 2);
+						assert(OPERATOR::LEFT_BRACKET == _opStack.top());
+						_opStack.pop(); //pop (
 					}
 					break;
 
@@ -268,27 +282,34 @@ namespace SmartLib
 					case OPERATOR::DIV:
 					case OPERATOR::MOD:
 					{
-						OPERATOR lastOp = _opStack.back();
+						OPERATOR lastOp = _opStack.top();
 						switch (lastOp)
 						{
 						case OPERATOR::MUL:
 						case OPERATOR::DIV:
 						case OPERATOR::MOD:
 						{
-							//expr1 / expr2    /  OK
-							//expr1 - expr2    /  KO
+							//- expr1 / expr2		/  OK
+							//(expr1 / expr2		/  OK
 							MakeExpressionBinary();
+							{
+								OPERATOR tmpTop = _opStack.top();
+								assert(OPERATOR::LEFT_BRACKET == tmpTop ||
+									OPERATOR::ADD == tmpTop ||
+									OPERATOR::SUB == tmpTop);
+							}
+							
 						}
 						break;
 						}
-						_opStack.push_back(tok._op);
+						_opStack.push(tok._op);
 					}
 					break;
 
 					case OPERATOR::ADD:
 					case OPERATOR::SUB:
 					{
-						OPERATOR lastOp = _opStack.back();
+						OPERATOR lastOp = _opStack.top();
 						switch (lastOp)
 						{
 						case OPERATOR::ADD:
@@ -297,13 +318,21 @@ namespace SmartLib
 						case OPERATOR::DIV:
 						case OPERATOR::MOD:
 						{
-							//expr1 - expr2    -
-							//expr1 / expr2    - 
-							MakeExpressionBinary();
+							//(expr1 - expr2    -
+							//(expr1 / expr2    - 
+							//(expr1 - expr2 / expr3    - 
+							int loopCount = 0;
+							while (OPERATOR::LEFT_BRACKET != _opStack.top())
+							{
+								MakeExpressionBinary();
+								++loopCount;
+							}
+							assert(loopCount >= 1 && loopCount <= 2);
+							assert(OPERATOR::LEFT_BRACKET == _opStack.top());
 						}
 						break;
 						}
-						_opStack.push_back(tok._op);
+						_opStack.push(tok._op);
 					}
 					break;
 
@@ -320,10 +349,103 @@ namespace SmartLib
 
 
 			assert(1 == _exprStack.size() && 0 == _opStack.size());
-			return std::move(_exprStack[0]);
+			return std::move(_exprStack.top());
 		}
 
 	public:
+		static std::string GenerateRandomExprString(
+			int numCount,
+			int minNum, //should be > 0
+			int maxNum,
+			int bracketCount,
+			bool asDouble
+		)
+		{
+			std::random_device rd;  //Will be used to obtain a seed for the random number engine
+			std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+			std::uniform_int_distribution<int> distrib(minNum, maxNum);
+
+			std::vector<int> vecNums(numCount);
+			for (int ii = 0; ii < numCount; ++ii)
+			{
+				int rndVal = distrib(gen);
+				if (rndVal)
+				{
+					vecNums[ii] = rndVal;
+				}
+				else
+				{
+					--ii;
+				}
+			}
+
+			static const char ops[] = "+-*/%";
+			std::vector<char> vecOps(numCount);
+			std::uniform_int_distribution<int> distribOps(0, asDouble ? _countof(ops) - 3 : _countof(ops) - 2);
+			for (int ii = 0; ii < numCount; ++ii)
+			{
+				int rndVal = distribOps(gen);
+				vecOps[ii] = ops[rndVal];
+			}
+			vecOps.back() = '\0';
+
+
+			std::set<int> bracketPos;
+			std::uniform_int_distribution<int> distribBracketPos(0, numCount - 1);
+			while (bracketPos.size() < 2 * bracketCount)
+			{
+				int rndVal = distribBracketPos(gen);
+				bracketPos.insert(rndVal);
+			}
+
+			std::vector<bool> veclb(numCount);
+			std::vector<bool> vecrb(numCount);
+			bool flaglb = true;
+
+			for (int bpos : bracketPos)
+			{
+				if (flaglb)
+				{
+					veclb[bpos] = true;
+				}
+				else
+				{
+					vecrb[bpos] = true;
+				}
+				flaglb = !flaglb;
+			}
+
+			std::string exprStr;
+			for (int ii = 0; ii < numCount; ++ii)
+			{
+				if (veclb[ii])
+				{
+					exprStr += "(";
+				}
+
+				exprStr += std::to_string(vecNums[ii]);
+
+				if (asDouble)
+				{
+					exprStr += ".0";
+				}
+
+				if (vecrb[ii])
+				{
+					exprStr += ")";
+				}
+
+				if (vecOps[ii])
+				{
+					exprStr += vecOps[ii];
+				}
+			}
+
+
+			return exprStr;
+		}
+
+
 		static upExpr<T> Parse(const char* begin, const char* end)
 		{
 			ExpressionBuilder<T> eb;
@@ -334,6 +456,74 @@ namespace SmartLib
 	};
 }
 
+//#define SML_STRING(x) #x
+
+void TestExprRandom()
+{
+	using namespace SmartLib;
+	using namespace ::std;
+	using T = double;
+
+	int bracketCounts[] = { 0, 7, 11, 17, 31, 79 };
+
+	/*
+	print('exprStr = ', 'exprStr')
+	varpy = exprStr
+
+	print('varpy = ', varpy)
+	varcpp = result
+
+	print('varcpp = ', varcpp)
+
+	print('varpy == varcpp?', varpy == varcpp)
+
+	*/
+
+	std::ofstream fout("000-verify-result.py");
+	fout.precision(15);
+
+	fout << "import math" << endl;
+
+
+	for (int bc : bracketCounts)
+	{
+		std::string exprStr = ExpressionBuilder<T>::GenerateRandomExprString(
+			511,//int numCount,
+			1,//int minNum, ,//should be > 0
+			1000,//int maxNum,
+			bc,//int bracketCount,
+			true//,//int asDouble
+		);
+
+		fout << "#BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" << endl;
+		fout << "print('exprStr = ', '" << exprStr << "')" << endl;
+		fout << endl;
+		fout << "varpy = " << exprStr << endl;
+		fout << "print('varpy  = ', varpy)" << endl;
+		fout << endl;
+
+		upExpr<T> expr = ExpressionBuilder<T>::Parse(exprStr.c_str(), exprStr.c_str() + exprStr.size());
+		T result = expr->Evaluate();
+
+		fout << "varcpp = " << result << endl;
+		fout << "print('varcpp = ', varcpp)" << endl;
+		fout << endl;
+		fout << "print('varpy == varcpp?', varpy == varcpp)" << endl;
+		fout << "print('math.isclose(varpy, varcpp, 1e-9, 1e-6)?', math.isclose(varpy, varcpp))" << endl;
+		fout << "print()" << endl;
+		fout << "#EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE" << endl;
+		fout << endl;
+
+		fout << "'''" << endl;
+		//expr->Print(2, fout);
+		fout << "'''" << endl;
+	}
+
+
+	std::ofstream foutcmd("000-verify-result.cmd");
+	foutcmd << "python 000-verify-result.py" << endl;
+	
+}
 
 void TestExpr()
 {
@@ -374,7 +564,7 @@ void TestExpr()
 		std::cout << str << "=" << result << ", realResult=" << testVal[index] << std::endl;
 		assert(testVal[index] == result);
 
-		expr->Print(2);
+		expr->Print(2, std::cout);
 		std::cout << std::endl;
 
 		++index;
