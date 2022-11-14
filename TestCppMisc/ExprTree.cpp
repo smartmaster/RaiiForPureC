@@ -353,6 +353,13 @@ namespace SmartLib
 		}
 
 	public:
+		template<typename T>
+		static bool IsCloseFloat(T val1, T val2, T relTol, T absTol)
+		{
+			//
+			return abs(val1 - val2) <= std::max(relTol* std::max(abs(val1), abs(val2)), absTol);
+		}
+
 		static std::string GenerateRandomExprString(
 			int numCount,
 			int minNum, //should be > 0
