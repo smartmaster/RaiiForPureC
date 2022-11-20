@@ -8,6 +8,7 @@ extern void testsjlj();
 extern void TestExpr();
 extern void TestExprRandom();
 extern void TestExprFunc();
+extern void TestExprFuncWithVar();
 
 int main(int argc, char** argv)
 {
@@ -23,6 +24,7 @@ int main(int argc, char** argv)
 	{
 	case 4:
 	{
+		TestExprFuncWithVar();
 		TestExprFunc();
 		TestExprRandom();
 		TestExpr();
