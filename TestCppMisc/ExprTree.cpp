@@ -1,16 +1,26 @@
 
 #include <cassert>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include <memory>
 #include <vector>
 #include <stack>
 #include <string>
+#include <unordered_set>
 #include <set>
-#include <iostream>
-#include <fstream>
 #include <random>
 
 namespace SmartLib
 {
+
+	enum class ExprType
+	{
+		ET_NUMBER,
+		ET_ID,
+		ET_BIN,
+		ET_FUNC,
+	};
 
 	template<typename T>
 	class Expression
@@ -19,6 +29,7 @@ namespace SmartLib
 		virtual ~Expression() {};
 		virtual T Evaluate() const = 0;
 		virtual void Print(int spaceCount, std::ostream& out) const = 0;
+		virtual ExprType ExpressionType() const = 0;
 	};
 
 	template<typename T>
@@ -51,6 +62,11 @@ namespace SmartLib
 				out << '\t';
 			}
 			out << _number << std::endl;
+		}
+
+		virtual ExprType ExpressionType() const override
+		{
+			return ExprType::ET_NUMBER;
 		}
 	};
 
@@ -113,14 +129,14 @@ namespace SmartLib
 				result = leftVal / rightVal;
 				break;
 			case OPERATOR::MOD:
-				if constexpr (std::is_integral_v<T>)
-				{
-					result = leftVal % rightVal;
-				}
-				else if constexpr (std::is_floating_point_v<T>)
+				if constexpr (std::is_floating_point_v<T>)
 				{
 					long long times = (long long)(leftVal / rightVal);
 					result = leftVal - times * rightVal;
+				}
+				else
+				{
+					result = leftVal % rightVal;
 				}
 				break;
 			default:
@@ -142,12 +158,115 @@ namespace SmartLib
 			_left->Print(spaceCount + 1, out);
 			_right->Print(spaceCount + 1, out);
 		}
+
+		virtual ExprType ExpressionType() const override
+		{
+			return ExprType::ET_BIN;
+		}
+	};
+
+	template<typename T>
+	class ExpressionId : public Expression<T>
+	{
+	private:
+		std::string _idName;
+	public:
+		ExpressionId(std::string idName) :
+			_idName{ std::move(idName) }
+		{
+		}
+
+		virtual ~ExpressionId() override
+		{
+		}
+
+		virtual T Evaluate() const override
+		{
+			assert(false);
+			return T{};
+		}
+
+		virtual void Print(int spaceCount, std::ostream& out) const override
+		{
+			for (int ii = 0; ii < spaceCount; ++ii)
+			{
+				out << '\t';
+			}
+			out << _idName << std::endl;
+		}
+
+		virtual ExprType ExpressionType() const override
+		{
+			return ExprType::ET_ID;
+		}
+	};
+
+	template<typename T>
+	class ExpressionFunction : public Expression<T>
+	{
+	private:
+		upExpr<T> _funcId;
+		std::vector<upExpr<T>> _args;
+
+	public:
+		ExpressionFunction(upExpr<T> _funcId, std::vector<upExpr<T>> args) :
+			_funcId{ std::move(_funcId) },
+			_args{ std::move(args) }
+		{
+		}
+
+		virtual ~ExpressionFunction() override
+		{
+		}
+
+		virtual T Evaluate() const override
+		{
+			assert(false);
+			return T{};
+		}
+
+		virtual void Print(int spaceCount, std::ostream& out) const override
+		{
+			_funcId->Print(spaceCount, out);
+
+			for (int ii = 0; ii < spaceCount; ++ii)
+			{
+				out << '\t';
+			}
+			out << "(" << std::endl;
+
+
+			for (const auto& arg : _args)
+			{
+				arg->Print(spaceCount + 1, out);
+
+				for (int ii = 0; ii < spaceCount + 1; ++ii)
+				{
+					out << '\t';
+				}
+				out << ',' << std::endl;;
+			}
+
+
+			for (int ii = 0; ii < spaceCount; ++ii)
+			{
+				out << '\t';
+			}
+			out << ")" << std::endl;
+		}
+
+		virtual ExprType ExpressionType() const override
+		{
+			return ExprType::ET_FUNC;
+		}
 	};
 
 	enum class TokenType
 	{
 		TT_OP,
 		TT_NUM,
+		TT_ID,
+		TT_COMMA,
 	};
 
 	template<typename T>
@@ -156,6 +275,7 @@ namespace SmartLib
 		TokenType _type;
 		OPERATOR _op{ OPERATOR::INVALID };
 		T _number{};
+		std::string _id;
 
 		Token(OPERATOR op) :
 			_type{ TokenType::TT_OP },
@@ -168,6 +288,18 @@ namespace SmartLib
 			_number{ num }
 		{
 		}
+
+
+		Token(std::string id) :
+			_type{ TokenType::TT_ID },
+			_id{ std::move(id) }
+		{
+		}
+
+		Token(TokenType tt) :
+			_type{ tt }
+		{
+		}
 	};
 
 	template<typename T>
@@ -175,19 +307,26 @@ namespace SmartLib
 	{
 		std::stack<upExpr<T>> _exprStack;
 		std::stack<OPERATOR> _opStack;
+		std::stack<std::vector<upExpr<T>>> _argsStack;
+
+	public:
+		template<typename U>
+		U PopTop(std::stack<U>& s)
+		{
+			U cur = std::move(s.top());
+			s.pop();
+			return cur;
+		}
 
 	private:
 		void MakeExpressionBinary()
 		{
 			//expr1 op expr2 --> exprNew
-			OPERATOR topOp = _opStack.top();
-			_opStack.pop();
+			OPERATOR topOp = PopTop(_opStack);
 
-			upExpr<T> expr2 = std::move(_exprStack.top());
-			_exprStack.pop();
+			upExpr<T> expr2 = PopTop(_exprStack);
 
-			upExpr<T> expr1 = std::move(_exprStack.top());
-			_exprStack.pop();
+			upExpr<T> expr1 = PopTop(_exprStack);
 
 			auto exprNew = std::make_unique<ExpressionBinary<T>>(topOp, std::move(expr1), std::move(expr2));
 
@@ -195,7 +334,103 @@ namespace SmartLib
 
 		}
 
+		void AddArgs()
+		{
+			upExpr<T> arg = PopTop(_exprStack);
+
+			_argsStack.top().push_back(std::move(arg));
+		}
+
+		void MakeFunction()
+		{
+			upExpr<T> funcId = PopTop(_exprStack);
+			assert(ExprType::ET_ID == funcId->ExpressionType());
+
+
+			assert(_argsStack.size());
+			std::vector<upExpr<T>> args = PopTop(_argsStack);
+
+			upExpr<T> funcExpr = std::make_unique<ExpressionFunction<T>>(std::move(funcId), std::move(args));
+			_exprStack.push(std::move(funcExpr));
+		}
+
+		void ProcessPossilbleLastArg()
+		{
+			if (0 == _exprStack.size())
+			{
+				return;
+			}
+
+			upExpr<T>& current = _exprStack.top();
+			if (ExprType::ET_ID == current->ExpressionType()) //f(		)
+			{
+				MakeFunction();
+			}
+			else //f(arg		)
+			{
+				upExpr<T> arg = _exprStack.size()? PopTop(_exprStack) : nullptr;
+				upExpr<T> funcid = _exprStack.size() ? PopTop(_exprStack) : nullptr;
+				if (arg && funcid && ExprType::ET_ID == funcid->ExpressionType())
+				{
+					_exprStack.push(std::move(funcid));
+					_exprStack.push(std::move(arg));
+					AddArgs();
+					MakeFunction();
+				}
+				else
+				{
+					if (funcid)
+					{
+						_exprStack.push(std::move(funcid));
+					}
+					if (arg)
+					{
+						_exprStack.push(std::move(arg));
+					}
+				}
+			}
+		}
+
 	private:
+
+		static bool IsIdStartChar(char ch)
+		{
+			return ch == '_' ||
+				(ch >= 'A' && ch <= 'Z') ||
+				(ch >= 'a' && ch <= 'z');
+		}
+
+		static bool IsIdChar(char ch)
+		{
+			return ch == '_' ||
+				(ch >= 'A' && ch <= 'Z') ||
+				(ch >= 'a' && ch <= 'z') ||
+				(ch >= '0' && ch <= '9');
+		}
+
+
+		static bool IsNumStartChar(char ch)
+		{
+			if constexpr (std::is_floating_point_v<T>)
+			{
+				return std::isdigit(ch) || ('.' == ch);
+			}
+			else
+			{
+				return std::isdigit(ch);
+			}
+		}
+
+		static bool IsOpChar(char ch)
+		{
+			static std::unordered_set<char> op_char = { '+', '-', '*', '/', '%', '(', ')' };
+			return op_char.end() != op_char.find(ch);
+		}
+
+		static bool IsCommaChar(char ch)
+		{
+			return ',' == ch;
+		}
 
 		static std::vector<Token<T>> StringToTokens(const char* begin, const char* end)
 		{
@@ -204,7 +439,21 @@ namespace SmartLib
 			while (begin != end && *begin)
 			{
 				const char ch = *begin;
-				if (std::isdigit(ch) || ('.' == ch))
+				if (IsIdStartChar(ch))
+				{
+					std::string strid;
+					strid += ch;
+					++begin;
+
+					char chTmp = 0;
+					while (IsIdChar(chTmp = *begin))
+					{
+						strid += chTmp;
+						++begin;
+					}
+					result.push_back(Token<T>(strid));
+				}
+				else if (IsNumStartChar(ch))
 				{
 					char* endstr = nullptr;
 					T data{};
@@ -220,13 +469,19 @@ namespace SmartLib
 					result.push_back(Token<T>((T)(data)));
 
 				}
-				else if (!std::isspace(ch))
+				else if (IsCommaChar(ch))
+				{
+					result.push_back(Token<T>(TokenType::TT_COMMA));
+					++begin;
+				}
+				else if (IsOpChar(ch))
 				{
 					result.push_back(Token<T>((OPERATOR)(ch)));
 					++begin;
 				}
-				else
+				else //if (std::isspace(ch))
 				{
+					assert(std::isspace(ch));
 					++begin;
 				}
 
@@ -251,12 +506,28 @@ namespace SmartLib
 				}
 				break;
 
+				case TokenType::TT_ID:
+				{
+					_exprStack.push(std::make_unique<ExpressionId<T>>(tok._id));
+				}
+				break;
+
+				case TokenType::TT_COMMA:
+				{
+					AddArgs();
+				}
+				break;
+
 				case TokenType::TT_OP:
 				{
 					switch (tok._op)
 					{
 					case OPERATOR::LEFT_BRACKET:
 					{
+						if (_exprStack.size() && ExprType::ET_ID == _exprStack.top()->ExpressionType())
+						{
+							_argsStack.push({});
+						}
 						_opStack.push(OPERATOR::LEFT_BRACKET);
 					}
 					break;
@@ -275,6 +546,7 @@ namespace SmartLib
 						assert(loopCount <= 2);
 						assert(OPERATOR::LEFT_BRACKET == _opStack.top());
 						_opStack.pop(); //pop (
+						ProcessPossilbleLastArg();;
 					}
 					break;
 
@@ -298,7 +570,7 @@ namespace SmartLib
 									OPERATOR::ADD == tmpTop ||
 									OPERATOR::SUB == tmpTop);
 							}
-							
+
 						}
 						break;
 						}
@@ -357,7 +629,7 @@ namespace SmartLib
 		static bool IsCloseFloat(T val1, T val2, T relTol, T absTol)
 		{
 			//
-			return abs(val1 - val2) <= std::max(relTol* std::max(abs(val1), abs(val2)), absTol);
+			return abs(val1 - val2) <= std::max(relTol * std::max(abs(val1), abs(val2)), absTol);
 		}
 
 		static std::string GenerateRandomExprString(
@@ -465,6 +737,25 @@ namespace SmartLib
 
 //#define SML_STRING(x) #x
 
+void TestExprFunc()
+{
+	using namespace SmartLib;
+	using namespace ::std;
+	using T = double;
+
+	const char* funcstr[] = {
+		"f()",
+		"f(1,2,3)",
+		"f(f1(1),f2(2),f3(3))",
+	};
+
+	for (const char* str : funcstr)
+	{
+		upExpr<T> expr = ExpressionBuilder<T>::Parse(str, nullptr);
+		expr->Print(0, std::cout);
+	}
+}
+
 void TestExprRandom()
 {
 	using namespace SmartLib;
@@ -529,7 +820,7 @@ void TestExprRandom()
 
 	std::ofstream foutcmd("000-verify-result.cmd");
 	foutcmd << "python 000-verify-result.py" << endl;
-	
+
 }
 
 void TestExpr()
