@@ -30,7 +30,10 @@
     <ClCompile Include="testsjlj.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ExprTree.cpp">
+    <ClCompile Include="ExprTree.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ExprTree.test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
