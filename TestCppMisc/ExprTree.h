@@ -14,11 +14,137 @@
 namespace SmartLib
 {
 
+	class ETBUtils
+	{
+	public:
+
+		static std::ostream& PrintSpaces(std::ostream& out, int tabs, int spaces)
+		{
+			for (int ii = 0; ii < tabs; ++ ii)
+			{
+				out << '\t';
+			}
+			for (int ii = 0; ii < spaces; ++ii)
+			{
+				out << ' ';
+			}
+			return out;
+		}
+
+		template<typename T>
+		static T PopTop(std::stack<T>& s)
+		{
+			T cur = std::move(s.top());
+			s.pop();
+			return cur;
+		}
+
+		template<typename T>
+		static bool IsCloseFloat(T val1, T val2, T relTol, T absTol)
+		{
+			//
+			T relTolVal = relTol * std::max(std::abs(val1), std::abs(val2));
+			return std::abs(val1 - val2) <= std::max(relTolVal, absTol);
+		}
+
+		static std::string GenerateRandomExprString(
+			int numCount,
+			int minNum, //should be > 0
+			int maxNum,
+			int bracketCount,
+			bool asDouble
+		)
+		{
+			std::random_device rd;  //Will be used to obtain a seed for the random number engine
+			std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+			std::uniform_int_distribution<int> distrib(minNum, maxNum);
+
+			std::vector<int> vecNums(numCount);
+			for (int ii = 0; ii < numCount; ++ii)
+			{
+				int rndVal = distrib(gen);
+				if (rndVal)
+				{
+					vecNums[ii] = rndVal;
+				}
+				else
+				{
+					--ii;
+				}
+			}
+
+			static const char ops[] = "+-*/%";
+			std::vector<char> vecOps(numCount);
+			std::uniform_int_distribution<int> distribOps(0, asDouble ? _countof(ops) - 3 : _countof(ops) - 2);
+			for (int ii = 0; ii < numCount; ++ii)
+			{
+				int rndVal = distribOps(gen);
+				vecOps[ii] = ops[rndVal];
+			}
+			vecOps.back() = '\0';
+
+
+			std::set<int> bracketPos;
+			std::uniform_int_distribution<int> distribBracketPos(0, numCount - 1);
+			while (bracketPos.size() < 2 * bracketCount)
+			{
+				int rndVal = distribBracketPos(gen);
+				bracketPos.insert(rndVal);
+			}
+
+			std::vector<bool> veclb(numCount);
+			std::vector<bool> vecrb(numCount);
+			bool flaglb = true;
+
+			for (int bpos : bracketPos)
+			{
+				if (flaglb)
+				{
+					veclb[bpos] = true;
+				}
+				else
+				{
+					vecrb[bpos] = true;
+				}
+				flaglb = !flaglb;
+			}
+
+			std::string exprStr;
+			for (int ii = 0; ii < numCount; ++ii)
+			{
+				if (veclb[ii])
+				{
+					exprStr += "(";
+				}
+
+				exprStr += std::to_string(vecNums[ii]);
+
+				if (asDouble)
+				{
+					exprStr += ".0";
+				}
+
+				if (vecrb[ii])
+				{
+					exprStr += ")";
+				}
+
+				if (vecOps[ii])
+				{
+					exprStr += vecOps[ii];
+				}
+			}
+
+
+			return exprStr;
+		}
+	};
+
 	enum class ExprType
 	{
 		ET_NUMBER,
-		ET_ID,
 		ET_BIN,
+		ET_ID,
 		ET_FUNC,
 	};
 
@@ -66,11 +192,7 @@ namespace SmartLib
 
 		virtual void Print(int spaceCount, std::ostream& out) const override
 		{
-			for (int ii = 0; ii < spaceCount; ++ii)
-			{
-				out << '\t';
-			}
-			out << _number << std::endl;
+			ETBUtils::PrintSpaces(out, 1, spaceCount) << _number << std::endl;
 		}
 
 		virtual ExprType GetExprType() const override
@@ -158,11 +280,7 @@ namespace SmartLib
 
 		virtual void Print(int spaceCount, std::ostream& out) const override
 		{
-			for (int ii = 0; ii < spaceCount; ++ii)
-			{
-				out << '\t';
-			}
-			out << (char)(_op) << std::endl;
+			ETBUtils::PrintSpaces(out, 1, spaceCount) << (char)(_op) << std::endl;
 
 			_left->Print(spaceCount + 1, out);
 			_right->Print(spaceCount + 1, out);
@@ -232,45 +350,23 @@ namespace SmartLib
 		{
 			if (ExprType::ET_ID == _et)
 			{
-				for (int ii = 0; ii < spaceCount; ++ii)
-				{
-					out << '\t';
-				}
-				out << _idName << std::endl;
+				ETBUtils::PrintSpaces(out, 1, spaceCount) << _idName << std::endl;
 			}
 			else
 			{
 
-				for (int ii = 0; ii < spaceCount; ++ii)
-				{
-					out << '\t';
-				}
-				out << _idName << std::endl;
-
-				for (int ii = 0; ii < spaceCount; ++ii)
-				{
-					out << '\t';
-				}
-				out << "(" << std::endl;
+				ETBUtils::PrintSpaces(out, 1, spaceCount) << _idName << std::endl;
+				ETBUtils::PrintSpaces(out, 1, spaceCount) << "(" << std::endl;
 
 
 				for (const auto& arg : _args)
 				{
 					arg->Print(spaceCount + 1, out);
-
-					for (int ii = 0; ii < spaceCount + 1; ++ii)
-					{
-						out << '\t';
-					}
-					out << ',' << std::endl;;
+					ETBUtils::PrintSpaces(out, 1, spaceCount) << ',' << std::endl;;
 				}
 
 
-				for (int ii = 0; ii < spaceCount; ++ii)
-				{
-					out << '\t';
-				}
-				out << ")" << std::endl;
+				ETBUtils::PrintSpaces(out, 1, spaceCount) << ")" << std::endl;
 			}
 		}
 
@@ -322,49 +418,9 @@ namespace SmartLib
 	};
 
 	template<typename T>
-	class ExpressionBuilder
+	class TokenParser
 	{
-		std::stack<upExpr<T>> _exprStack;
-		std::stack<OPERATOR> _opStack;
-		//std::stack<std::vector<upExpr<T>>> _argsStack;
-
-	public:
-		template<typename U>
-		U PopTop(std::stack<U>& s)
-		{
-			U cur = std::move(s.top());
-			s.pop();
-			return cur;
-		}
-
 	private:
-		void MakeExpressionBinary()
-		{
-			//expr1 op expr2 --> exprNew
-			OPERATOR topOp = PopTop(_opStack);
-
-			upExpr<T> expr2 = PopTop(_exprStack);
-
-			upExpr<T> expr1 = PopTop(_exprStack);
-
-			auto exprNew = std::make_unique<ExpressionBinary<T>>(topOp, std::move(expr1), std::move(expr2));
-
-			_exprStack.push(std::move(exprNew));
-
-		}
-
-		void AddToArgs()
-		{
-			//move from expression stack to argsStack top
-			upExpr<T> arg = PopTop(_exprStack);
-			auto& funcExpr = _exprStack.top();
-			assert(ExprType::ET_FUNC == funcExpr->GetExprType());
-			funcExpr->AddArg(std::move(arg));
-			//_argsStack.top().push_back(std::move(arg));
-		}
-
-	private:
-
 		static bool IsIdStartChar(char ch)
 		{
 			return ch == '_' ||
@@ -404,8 +460,10 @@ namespace SmartLib
 			return ',' == ch;
 		}
 
+	public:
 		static std::vector<Token<T>> StringToTokens(const char* begin, const char* end)
 		{
+			std::stack<bool> bracketPair;
 			std::vector<Token<T>> result;
 			result.push_back(Token<T>((OPERATOR)('('))); //add guarded token (
 			while (begin != end && *begin)
@@ -448,6 +506,29 @@ namespace SmartLib
 				}
 				else if (IsOpChar(ch))
 				{
+					if (ch == '(')
+					{
+						if (TokenType::TT_ID == result.back()._type)
+						{
+							bracketPair.push(true); //function left bracket
+						}
+						else
+						{
+							bracketPair.push(false); //expression left bracket
+						}
+					}
+					else if (ch == ')')
+					{
+						if (ETBUtils::PopTop(bracketPair))
+						{
+							const Token<T>& tok = result.back();
+							if (!(tok._type == TokenType::TT_COMMA) &&
+								!(tok._type == TokenType::TT_OP && tok._op == OPERATOR::LEFT_BRACKET))
+							{
+								result.push_back(Token<T>(TokenType::TT_COMMA)); //add comma for the last arg of function
+							}
+						}
+					}
 					result.push_back(Token<T>((OPERATOR)(ch)));
 					++begin;
 				}
@@ -462,6 +543,43 @@ namespace SmartLib
 			result.push_back(Token<T>((OPERATOR)(')'))); //add guarded token )
 			return result;
 		}
+	};
+
+	template<typename T>
+	class ExpressionBuilder
+	{
+	private:
+		std::stack<upExpr<T>> _exprStack;
+		std::stack<OPERATOR> _opStack;
+	private:
+		void MakeExpressionBinary()
+		{
+			//expr1 op expr2 --> exprNew
+			OPERATOR topOp = ETBUtils::PopTop(_opStack);
+
+			upExpr<T> expr2 = ETBUtils::PopTop(_exprStack);
+
+			upExpr<T> expr1 = ETBUtils::PopTop(_exprStack);
+
+			auto exprNew = std::make_unique<ExpressionBinary<T>>(topOp, std::move(expr1), std::move(expr2));
+
+			_exprStack.push(std::move(exprNew));
+
+		}
+
+		void AddToArgs()
+		{
+			//move from expression stack to argsStack top
+			upExpr<T> arg = ETBUtils::PopTop(_exprStack);
+			auto& funcExpr = _exprStack.top();
+			assert(ExprType::ET_FUNC == funcExpr->GetExprType());
+			funcExpr->AddArg(std::move(arg));
+			//_argsStack.top().push_back(std::move(arg));
+		}
+
+	private:
+
+		
 
 		//please add guarded '(' and ')' first
 		template<typename TOKEN_ITER>
@@ -486,7 +604,18 @@ namespace SmartLib
 
 				case TokenType::TT_COMMA:
 				{
+					//(expr1   ,
+					//(expr1 - expr2   ,
+					//(expr1 - expr2 / expr3  ,
+					int loopCount = 0;
+					while (OPERATOR::LEFT_BRACKET != _opStack.top())
+					{
+						MakeExpressionBinary();
+						++loopCount;
+					}
+					assert(loopCount <= 2);
 					AddToArgs();
+					assert(OPERATOR::LEFT_BRACKET == _opStack.top());
 				}
 				break;
 
@@ -601,110 +730,11 @@ namespace SmartLib
 		}
 
 	public:
-		static bool IsCloseFloat(T val1, T val2, T relTol, T absTol)
-		{
-			//
-			T relTolVal = relTol * std::max(std::abs(val1), std::abs(val2));
-			return std::abs(val1 - val2) <= std::max(relTolVal, absTol);
-		}
-
-		static std::string GenerateRandomExprString(
-			int numCount,
-			int minNum, //should be > 0
-			int maxNum,
-			int bracketCount,
-			bool asDouble
-		)
-		{
-			std::random_device rd;  //Will be used to obtain a seed for the random number engine
-			std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-			std::uniform_int_distribution<int> distrib(minNum, maxNum);
-
-			std::vector<int> vecNums(numCount);
-			for (int ii = 0; ii < numCount; ++ii)
-			{
-				int rndVal = distrib(gen);
-				if (rndVal)
-				{
-					vecNums[ii] = rndVal;
-				}
-				else
-				{
-					--ii;
-				}
-			}
-
-			static const char ops[] = "+-*/%";
-			std::vector<char> vecOps(numCount);
-			std::uniform_int_distribution<int> distribOps(0, asDouble ? _countof(ops) - 3 : _countof(ops) - 2);
-			for (int ii = 0; ii < numCount; ++ii)
-			{
-				int rndVal = distribOps(gen);
-				vecOps[ii] = ops[rndVal];
-			}
-			vecOps.back() = '\0';
-
-
-			std::set<int> bracketPos;
-			std::uniform_int_distribution<int> distribBracketPos(0, numCount - 1);
-			while (bracketPos.size() < 2 * bracketCount)
-			{
-				int rndVal = distribBracketPos(gen);
-				bracketPos.insert(rndVal);
-			}
-
-			std::vector<bool> veclb(numCount);
-			std::vector<bool> vecrb(numCount);
-			bool flaglb = true;
-
-			for (int bpos : bracketPos)
-			{
-				if (flaglb)
-				{
-					veclb[bpos] = true;
-				}
-				else
-				{
-					vecrb[bpos] = true;
-				}
-				flaglb = !flaglb;
-			}
-
-			std::string exprStr;
-			for (int ii = 0; ii < numCount; ++ii)
-			{
-				if (veclb[ii])
-				{
-					exprStr += "(";
-				}
-
-				exprStr += std::to_string(vecNums[ii]);
-
-				if (asDouble)
-				{
-					exprStr += ".0";
-				}
-
-				if (vecrb[ii])
-				{
-					exprStr += ")";
-				}
-
-				if (vecOps[ii])
-				{
-					exprStr += vecOps[ii];
-				}
-			}
-
-
-			return exprStr;
-		}
-
-
 		static upExpr<T> Parse(const char* begin, const char* end)
 		{
+			std::vector<Token<T>> tokes = TokenParser<T>::StringToTokens(begin, end);
+
 			ExpressionBuilder<T> eb;
-			std::vector<Token<T>> tokes = ExpressionBuilder<T>::StringToTokens(begin, end);
 			upExpr<T> expr = eb.Build(tokes.begin(), tokes.end());
 			return expr;
 		}

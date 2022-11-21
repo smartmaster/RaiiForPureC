@@ -8,12 +8,22 @@ void TestExprFuncWithVar()
 	using namespace ::std;
 	using T = double;
 
+#if 0
 	const char* funcstr[] = {
 		"2+fff()",
 		"3+fff(aaa,)",
 		"4+ggg(aaa, bbb, ccc,)",
 		"5+hhh(h1(aaa, bbb,),h2(ccc,ddd,),h3(eee,fff,), h4(),)",
 	};
+#else
+	const char* funcstr[] = {
+		"2+fff()",
+		"3+fff(aaa)",
+		"4+ggg(aaa, bbb, ccc)",
+		"5+hhh(h1(aaa, bbb),h2(ccc,ddd),h3(eee,fff), h4())",
+	};
+#endif
+	
 
 	int index = 0;
 	for (const char* str : funcstr)
@@ -37,21 +47,21 @@ void TestExprFunc()
 	using namespace ::std;
 	using T = double;
 
-#if 0
+#if 1
 	const char* funcstr[] = {
-		"fff(5)",
-		"ggg(0.5,1.0,1.5)",
-		"hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6))",
+		"fff(0+0+0+5*1*1*1)",
+		"ggg(0.5+0+0+0,1.0+0+0+0,1.5+0+0+0)",
+		"hhh(h1(0.1+0+0+0,0.3+0+0+0),h2(0.2+0+0+0,0.5+0+0+0),h3(0.3+0+0+0,0.6+0+0+0))",
 
-				"  fff(5)  -  ggg(0.5,1.0,1.5)  -  hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6))  ",
-		"  fff(5)  /  ggg(0.5,1.0,1.5)  /   hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6))  ",
-		"  fff(5)  -  ggg(0.5,1.0,1.5)  /   hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6))  " ,
-		"   fff(5)  /   ggg(0.5,1.0,1.5)  -  hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6))  ",
+				"  fff(0+0+0+5*1*1*1)  -  ggg(0+0+0+0+0.5*1*1*1,0+0+0+0+1.0*1*1*1,0+0+0+0+1.5*1*1*1)  -  hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6),h4())  ",
+		"  fff(0+0+0+5*1*1*1)  /  ggg(0+0+0+0+0.5*1*1*1,0+0+0+0+1.0*1*1*1,0+0+0+0+1.5*1*1*1)  /   hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6),h4())  ",
+		"  fff(0+0+0+5*1*1*1)  -  ggg(0+0+0+0+0.5*1*1*1,0+0+0+0+1.0*1*1*1,0+0+0+0+1.5*1*1*1)  /   hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6),h4())  " ,
+		"   fff(0+0+0+5*1*1*1)  /   ggg(0+0+0+0+0.5*1*1*1,0+0+0+0+1.0*1*1*1,0+0+0+0+1.5*1*1*1)  -  hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6),h4())  ",
 
-		"  (fff(5)  -  ggg(0.5,1.0,1.5))  -  hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6))  ",
-		"  (fff(5)  /  ggg(0.5,1.0,1.5))  /   hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6))  ",
-		"  fff(5)  -  (ggg(0.5,1.0,1.5)  /   hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6)))  " ,
-		"   (fff(5)  /   ggg(0.5,1.0,1.5))  -  hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6))  ",
+		"  (fff(0+0+0+5*1*1*1)  -  ggg(0+0+0+0+0.5*1*1*1,0+0+0+0+1.0*1*1*1,0+0+0+0+1.5*1*1*1))  -  hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6),h4())  ",
+		"  (fff(0+0+0+5*1*1*1)  /  ggg(0+0+0+0+0.5*1*1*1,0+0+0+0+1.0*1*1*1,0+0+0+0+1.5*1*1*1))  /   hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6),h4())  ",
+		"  fff(0+0+0+5*1*1*1)  -  (ggg(0+0+0+0+0.5*1*1*1,0+0+0+0+1.0*1*1*1,0+0+0+0+1.5*1*1*1)  /   hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6),h4()))  " ,
+		"   (fff(0+0+0+5*1*1*1)  /   ggg(0+0+0+0+0.5*1*1*1,0+0+0+0+1.0*1*1*1,0+0+0+0+1.5*1*1*1))  -  hhh(h1(0.1,0.3),h2(0.2,0.5),h3(0.3,0.6),h4())  ",
 	};
 #else
 	const char* funcstr[] = {
@@ -94,7 +104,7 @@ void TestExprFunc()
 		upExpr<T> expr = ExpressionBuilder<T>::Parse(str, nullptr);
 		expr->Print(0, std::cout);
 		T eval = expr->Evaluate();
-		bool isClose = ExpressionBuilder<T>::IsCloseFloat(testVal[index], eval, 1e-9, 1e-6);
+		bool isClose = ETBUtils::IsCloseFloat(testVal[index], eval, 1e-9, 1e-6);
 		cout << str << "=" << eval << endl;
 		cout << "Is " << testVal[index] << " and " << eval << " close? " << isClose << endl;
 		assert(isClose);
@@ -131,7 +141,7 @@ void TestExprRandom()
 
 	for (int bc : bracketCounts)
 	{
-		std::string exprStr = ExpressionBuilder<T>::GenerateRandomExprString(
+		std::string exprStr = ETBUtils::GenerateRandomExprString(
 			511,//int numCount,
 			1,//int minNum, ,//should be > 0
 			1000,//int maxNum,
