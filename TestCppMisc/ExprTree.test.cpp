@@ -30,7 +30,7 @@ void TestExprFuncWithVar()
 	{
 		upExpr<T> expr = ExpressionBuilder<T>::Parse(str, nullptr);
 		std::cout << str << std::endl;
-		expr->Print(0, std::cout);
+		expr->Print(1, 1, std::cout);
 		std::cout << std::endl;
 		//T eval = expr->Evaluate();
 		//bool isClose = ExpressionBuilder<T>::IsCloseFloat(testVal[index], eval, 1e-9, 1e-6);
@@ -102,7 +102,7 @@ void TestExprFunc()
 	for (const char* str : funcstr)
 	{
 		upExpr<T> expr = ExpressionBuilder<T>::Parse(str, nullptr);
-		expr->Print(0, std::cout);
+		expr->Print(1, 1, std::cout);
 		T eval = expr->Evaluate();
 		bool isClose = ETBUtils::IsCloseFloat(testVal[index], eval, 1e-9, 1e-6);
 		cout << str << "=" << eval << endl;
@@ -218,7 +218,7 @@ void TestExpr()
 		std::cout << str << "=" << result << ", realResult=" << testVal[index] << std::endl;
 		assert(testVal[index] == result);
 
-		expr->Print(2, std::cout);
+		expr->Print(1, 1, std::cout);
 		std::cout << std::endl;
 
 		++index;

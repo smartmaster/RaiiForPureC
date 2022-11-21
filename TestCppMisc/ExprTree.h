@@ -154,7 +154,7 @@ namespace SmartLib
 	public:
 		virtual ~Expression() {};
 		virtual T Evaluate() const = 0;
-		virtual void Print(int spaceCount, std::ostream& out) const = 0;
+		virtual void Print(int tabs, int spaceCount, std::ostream& out) const = 0;
 		virtual ExprType GetExprType() const = 0;
 		virtual void SetExprType(ExprType et)
 		{
@@ -190,9 +190,9 @@ namespace SmartLib
 			return _number;
 		}
 
-		virtual void Print(int spaceCount, std::ostream& out) const override
+		virtual void Print(int tabs, int spaceCount, std::ostream& out) const override
 		{
-			ETBUtils::PrintSpaces(out, 1, spaceCount) << _number << std::endl;
+			ETBUtils::PrintSpaces(out, tabs, spaceCount) << _number << std::endl;
 		}
 
 		virtual ExprType GetExprType() const override
@@ -278,12 +278,12 @@ namespace SmartLib
 			return result;
 		}
 
-		virtual void Print(int spaceCount, std::ostream& out) const override
+		virtual void Print(int tabs, int spaceCount, std::ostream& out) const override
 		{
-			ETBUtils::PrintSpaces(out, 1, spaceCount) << (char)(_op) << std::endl;
+			ETBUtils::PrintSpaces(out, tabs, spaceCount) << (char)(_op) << std::endl;
 
-			_left->Print(spaceCount + 1, out);
-			_right->Print(spaceCount + 1, out);
+			_left->Print(tabs + 1, spaceCount, out);
+			_right->Print(tabs + 1, spaceCount, out);
 		}
 
 		virtual ExprType GetExprType() const override
@@ -346,27 +346,27 @@ namespace SmartLib
 			}
 		}
 
-		virtual void Print(int spaceCount, std::ostream& out) const override
+		virtual void Print(int tabs, int spaceCount, std::ostream& out) const override
 		{
 			if (ExprType::ET_ID == _et)
 			{
-				ETBUtils::PrintSpaces(out, 1, spaceCount) << _idName << std::endl;
+				ETBUtils::PrintSpaces(out, tabs, spaceCount) << _idName << std::endl;
 			}
 			else
 			{
 
-				ETBUtils::PrintSpaces(out, 1, spaceCount) << _idName << std::endl;
-				ETBUtils::PrintSpaces(out, 1, spaceCount) << "(" << std::endl;
+				ETBUtils::PrintSpaces(out, tabs, spaceCount) << _idName << std::endl;
+				ETBUtils::PrintSpaces(out, tabs, spaceCount) << "(" << std::endl;
 
 
 				for (const auto& arg : _args)
 				{
-					arg->Print(spaceCount + 1, out);
-					ETBUtils::PrintSpaces(out, 1, spaceCount) << ',' << std::endl;;
+					arg->Print(tabs + 1, spaceCount, out);
+					ETBUtils::PrintSpaces(out, tabs + 1, spaceCount) << ',' << std::endl;;
 				}
 
 
-				ETBUtils::PrintSpaces(out, 1, spaceCount) << ")" << std::endl;
+				ETBUtils::PrintSpaces(out, tabs, spaceCount) << ")" << std::endl;
 			}
 		}
 
@@ -415,7 +415,36 @@ namespace SmartLib
 			_type{ tt }
 		{
 		}
+
+		
 	};
+
+
+	template<typename T>
+	std::ostream& operator<< (std::ostream& out, const Token<T>& tok)
+	{
+		switch (tok._type)
+		{
+		case TokenType::TT_OP:
+			out << (char)(tok._op);
+			break;
+		case TokenType::TT_NUM:
+			out << tok._number;
+			break;
+		case TokenType::TT_ID:
+			out << tok._id;
+			break;
+		case TokenType::TT_COMMA:
+			out << ',';
+			break;
+		default:
+			assert(false);
+			break;
+		}
+
+		return out;
+	}
+
 
 	template<typename T>
 	class TokenParser
@@ -461,6 +490,17 @@ namespace SmartLib
 		}
 
 	public:
+		template<typename TI>
+		static std::ostream& PrintTokens(std::ostream& out, TI begin, TI end)
+		{
+			while (begin != end)
+			{
+				const Token<T>& tok = *begin;
+				out << tok;
+				++begin;
+			}
+			return out;
+		}
 		static std::vector<Token<T>> StringToTokens(const char* begin, const char* end)
 		{
 			std::stack<bool> bracketPair;
@@ -635,7 +675,7 @@ namespace SmartLib
 
 					case OPERATOR::RIGHT_BRACKET:
 					{
-						//(
+						//(        )
 						//(expr1   )
 						//(expr1 - expr2   )
 						//(expr1 - expr2 / expr3  )
@@ -732,10 +772,14 @@ namespace SmartLib
 	public:
 		static upExpr<T> Parse(const char* begin, const char* end)
 		{
-			std::vector<Token<T>> tokes = TokenParser<T>::StringToTokens(begin, end);
-
+			std::vector<Token<T>> tokens = TokenParser<T>::StringToTokens(begin, end);
+			constexpr int xxxdebug = 0;
+			if constexpr (xxxdebug)
+			{
+				TokenParser<T>::PrintTokens(std::cout, tokens.begin(), tokens.end()) << std::endl;
+			}
 			ExpressionBuilder<T> eb;
-			upExpr<T> expr = eb.Build(tokes.begin(), tokes.end());
+			upExpr<T> expr = eb.Build(tokens.begin(), tokens.end());
 			return expr;
 		}
 	};
