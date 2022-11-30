@@ -130,6 +130,7 @@
     <ClCompile Include="main-smlCGL.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="smlCglUtils.h" />
     <ClInclude Include="smlColorBuffer.h" />
     <ClInclude Include="smlColorBuffertest.h" />
   </ItemGroup>

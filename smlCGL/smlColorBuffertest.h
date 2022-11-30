@@ -12,7 +12,7 @@ namespace SmartLib
 	public:
 
 		template<typename T>
-		static bool IsCloseFloat(T val1, T val2, T relTol, T absTol)
+		static bool IsRealNumberClose(T val1, T val2, T relTol, T absTol)
 		{
 			//
 			T relTolVal = relTol * std::max(std::abs(val1), std::abs(val2));
@@ -50,7 +50,7 @@ namespace SmartLib
 					for (auto vv : svv)
 					{
 						auto color = cb.GetScreenColor(hh, vv);
-						assert(IsCloseFloat(expected, color._data[0], 1e-9, 1e-6));
+						assert(IsRealNumberClose(expected, color._data[0], 1e-9, 1e-6));
 						expected += 0.1;
 					}
 				}

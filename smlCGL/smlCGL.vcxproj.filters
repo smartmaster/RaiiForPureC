@@ -26,5 +26,8 @@
     <ClInclude Include="smlColorBuffertest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="smlCglUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
